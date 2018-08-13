@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <property name="LOG_FILE_PATH"
+            value="/opt/app/log/government-wexin-project/server"/>
+  <property name="PATTERN"
+            value="%date{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
+
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="LOG_INFO"
+            class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--<file>${LOG_PATH}/${LOG_FILE}</file>-->
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.log.zip
+      </fileNamePattern>
+      <MaxHistory>180</MaxHistory>
+    </rollingPolicy>
+
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>${PATTERN}</pattern>
+    </layout>
+    <!-- 此日志文件只记录info级别的 -->
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>NEUTRAL</onMismatch>
+    </filter>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="console"/>
+    <appender-ref ref="LOG_INFO"/>
+  </root>
+</configuration>

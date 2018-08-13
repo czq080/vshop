@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <properties resource="generator.properties"/>
+    <context id="Mysql" targetRuntime="MyBatis3Simple" defaultModelType="flat">
+        <property name="beginningDelimiter" value="`"/>
+        <property name="endingDelimiter" value="`"/>
+
+        <jdbcConnection driverClass="${jdbc.driverClass}"
+                        connectionURL="${jdbc.connectionURL}"
+                        userId="${jdbc.userId}"
+                        password="${jdbc.password}">
+        </jdbcConnection>
+        <javaTypeResolver>
+            <!-- 是否使用bigDecimal， false可自动转化以下类型（Long, Integer, Short, etc.） -->
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+        <!-- 生成实体类地址 -->
+        <javaModelGenerator targetPackage="com.vigoss.shop.sys.entity" targetProject="src/main/java">
+            <property name="enableSubPackages" value="false"/> <!-- 是否在当前路径下新加一层-->
+            <property name="trimStrings" value="true"/> <!-- 是否针对string类型的字段在set的时候进行trim调用 -->
+        </javaModelGenerator>
+        <!-- 生成MAPXML文件 -->
+        <sqlMapGenerator targetPackage="mappers/vshop" targetProject="src/main/resources">
+            <property name="enableSubPackages" value="true"/> <!-- 是否在当前路径下新加一层-->
+        </sqlMapGenerator>
+        <!-- 生成DAO -->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.vigoss.shop.sys.dao.mapper"
+                             targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/> <!-- 是否在当前路径下新加一层-->
+        </javaClientGenerator>
+        <table tableName="quartz_job">
+        </table>
+    </context>
+</generatorConfiguration>

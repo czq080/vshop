@@ -1,0 +1,103 @@
+# create by 2017.03 jamefeng
+# monify by 2017.09 jamefeng
+
+第一个字母代码
+S代码选座，B代表行李，U登机口升舱，W代表wifi，E电子发票，F航延证明，A代表行动障碍、老人服务，
+
+
+
+#第一个字母代表链路： 66链路为 A ，67链路 B。 其余的为Z
+第二字母代表服务： ----导致流程终止
+P-参数异常或者统一异常导致流程终止
+S-代表选座相关逻辑--导致流程终止
+     E-代表ET相关逻辑--导致流程终止
+     D代表CBD相关逻辑--导致流程终止
+     I 代表IBE相关逻辑--导致流程终止
+     C 代表CKI相关逻辑--导致流程终止
+     G 代表ECS相关逻辑--导致流程终止
+
+B代表行李，U登机口升舱，W代表wifi，E电子发票，F航延证明，A代表行动障碍、老人服务，
+其余可以根据00-9999编码
+
+
+
+#####
+#ReadMe
+#Example
+#  code.ext.exception.param.non784tickparam=SP011
+#  zh.ext.exception.param.non784tickparam=很抱歉，你输入#{tktNo}不支持非南航客票办理选座。
+#  en.ext.exception.param.non784tickparam=Sorry,your input #{tktNo} not support now.
+#  devmsg.ext.exception.param.non784tickparam=判断为客票号，但非784客票
+#
+#       package -->ext.exception.param  (com.csair.ext.exception.param )[remove com.csair]
+#       class  -->non784tickparam （Non784TickParamException ）
+#
+#  兼容大小写的
+#   your path: com.csair.ext.exception.Non784TickParamException
+#   你配置可以是：
+#           code.ext.exception.param.Non784tickparam
+#           code.ext.exception.param.Non784TickParamException
+#  the suffix
+#      code  -->  exception code
+#      zh    -->  exception chinese language
+#      en    -->  exception english language
+#      devmsg    -->  exception develop message
+#
+#  the valrilable  #{tktNo} is replace
+#
+#  同个原因可以提示不同的提示语
+#     例如 同是输入参数有误，不同的功能不同的步骤，同个异常类，但是可以配置不同的提示语。
+#         ，可以详细见下面demo
+#   efficiency.query|zh.xxxx
+#   login|zh.xxx
+
+###在param也是以P开头，common目前只有 P001-P100 ,如需可后续扩展
+
+
+######使用demo#######
+------配置文件 start-------
+#传参数错误
+code.ext.exception.common.InputParam=P012
+zh.ext.exception.common.inputparam=很抱歉，请求的处理过程中存在异常，请稍后重试
+en.ext.exception.common.inputparam=Sorry, system busy，please try again later
+ko.ext.exception.common.inputparam=죄송합니다. 현재 사용자가 많으니 잠시 후 다시 시도해주세요.
+devmsg.ext.exception.common.inputparam=传参数错误
+
+login|zh.ext.exception.common.inputparam=很抱歉，登录查询时入参有异常，请稍后重试
+efficiency.query|zh.ext.exception.common.inputparam=很抱歉，查询效能时入参有异常，请稍后重试
+
+------配置文件 end-------
+
+
+------代码 start-------
+try{
+	throw new InputParamException(new Exception("Hello this nested exeption!"));
+}catch(ExtException e){
+	ExtException exception = ExceptionUtil.getTipExtException(e);
+
+	System.out.println(exception.getDevMsg());          //{"P012":"传参数错误","internal:":"Hello this nested exeption!"}
+	System.out.println(exception.getExceptionMsg());    //很抱歉，请求的处理过程中存在异常，请稍后重试
+
+
+	System.out.println(exception.getExceptionMsg("login"));   //很抱歉，登录查询时入参有异常，请稍后重试
+	System.out.println(exception.getExceptionMsg());          //很抱歉，登录查询时入参有异常，请稍后重试
+
+	System.out.println(exception.getExceptionMsg("efficiency.query"));   //很抱歉，查询效能时入参有异常，请稍后重试
+	System.out.println(exception.getExceptionMsg());                     //很抱歉，查询效能时入参有异常，请稍后重试
+
+	System.out.println(exception.getRespCode(ExtTypeCode.MONITOR));      //MP012
+
+	/**
+	 ExtException{respCode='P012', exceptionMsg='很抱歉，查询效能时入参有异常，请稍后重试', devMsg='{"P012":"传参数错误","internal:":"Hello this nested exeption!"}'}
+		at com.csair.ext.exception.TestExceptionTrow.test_Throw(TestExceptionTrow.java:23)
+		at ....
+	 Caused by: java.lang.Exception: Hello this nested exeption!
+	 ... 27 more
+	 */
+	ThreadUtil.sleep(1000);
+	exception.printStackTrace();
+}catch(Exception e){
+	e.printStackTrace();
+}
+
+------代码 end-------

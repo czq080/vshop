@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/default.xml" />
+
+  <property name="LOG_FILE_PATH"
+            value="/opt/app/log/government-wexin-project/server"/>
+  <property name="PATTERN"
+            value="%date{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
+
+  <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!--<appender name="LOG_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+  <!--&lt;!&ndash; 正在记录的日志文件的路径及文件名 &ndash;&gt;-->
+  <!--<file>${LOG_FILE_PATH}/log-error.log</file>-->
+  <!--&lt;!&ndash; 日志记录器的滚动策略，按日期，按大小记录 &ndash;&gt;-->
+  <!--<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+  <!--<fileNamePattern>${LOG_FILE_PATH}/log-error.%d{yyyy-MM-dd}.log.zip-->
+  <!--</fileNamePattern>-->
+  <!--<MaxHistory>180</MaxHistory>-->
+  <!--</rollingPolicy>-->
+  <!--&lt;!&ndash; 追加方式记录日志 &ndash;&gt;-->
+  <!--<append>true</append>-->
+  <!--&lt;!&ndash; 日志文件的格式 &ndash;&gt;-->
+  <!--<layout class="ch.qos.logback.classic.PatternLayout">-->
+  <!--<pattern>${PATTERN}</pattern>-->
+  <!--</layout>-->
+  <!--&lt;!&ndash; 此日志文件只记录error级别的 &ndash;&gt;-->
+  <!--<filter class="ch.qos.logback.classic.filter.LevelFilter">-->
+  <!--<level>error</level>-->
+  <!--<onMatch>ACCEPT</onMatch>-->
+  <!--<onMismatch>DENY</onMismatch>-->
+  <!--</filter>-->
+  <!--</appender>-->
+
+  <appender name="LOG_INFO"
+            class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!--<file>${LOG_PATH}/${LOG_FILE}</file>-->
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.log.zip
+      </fileNamePattern>
+      <MaxHistory>180</MaxHistory>
+    </rollingPolicy>
+
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>${PATTERN}</pattern>
+    </layout>
+    <!-- 此日志文件只记录info级别的 -->
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>NEUTRAL</onMismatch>
+    </filter>
+  </appender>
+  <logger name="com.atomikos" level="ERROR" />
+  <root level="INFO">
+    <appender-ref ref="console"/>
+    <appender-ref ref="LOG_INFO"/>
+  </root>
+</configuration>

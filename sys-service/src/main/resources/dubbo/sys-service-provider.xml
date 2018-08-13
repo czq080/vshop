@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+	http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.1.xsd
+	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd"
+	default-lazy-init="false">
+	
+	<!-- 提供方应用名称信息，这个相当于起一个名字，我们dubbo管理页面比较清晰是哪个应用暴露出来的 -->
+	<dubbo:application name="shop-service"  />
+	<!--<dubbo:monitor protocol="registry"/>-->
+	<dubbo:provider timeout="10000"></dubbo:provider>
+	<!-- shopZookeep相关服务注册地址 -->
+	<dubbo:registry address="${zookeeper.address}" check="false" id="shopZookeep" timeout="10000"/>
+	<!-- shopZookeep用dubbo协议在20880端口暴露服务 -->
+	 <dubbo:protocol name="dubbo" port="${dubbo.service.port}" dispatcher="all" threadpool="cached" threads="100" />
+
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysMenuService" ref="sysMenuServiceImpl"  protocol="dubbo"/>
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysRoleDeptService" ref="sysRoleDeptServiceImpl"  protocol="dubbo"  />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysRoleMenuService" ref="sysRoleMenuServiceImpl"  protocol="dubbo"/>
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysRoleService" ref="sysRoleServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysUserRoleService" ref="sysUserRoleServiceImpl"  protocol="dubbo"/>
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysUserService" ref="sysUserServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysDeptService" ref="sysDeptServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysRegionService" ref="sysRegionServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysConfigService" ref="sysConfigServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysMacroService" ref="sysMacroServiceImpl"  protocol="dubbo" />
+	<dubbo:service interface="com.vigoss.shop.sys.service.SysQuartzJobService" ref="sysQuartzJobServiceImpl"  protocol="dubbo" />
+</beans>
+

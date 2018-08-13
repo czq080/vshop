@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"   
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"    
+ xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"   
+ xsi:schemaLocation="http://www.springframework.org/schema/beans  
+ http://www.springframework.org/schema/beans/spring-beans.xsd      
+ http://code.alibabatech.com/schema/dubbo        
+ http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+	<dubbo:application name="${dubbo.application.name}" owner="${dubbo.application.owner}"/>
+	<!-- 定义 zookeeper 注册中心地址及协议 -->
+	<dubbo:registry protocol="${dubbo.registry.protocol}" address="${dubbo.registry.address}" client="zkclient"/>
+ 	<!-- which service to consume? -->
+	<dubbo:consumer timeout="10000" check="false" retries="0"/>
+	
+	<!-- 核心模块服务接口消费者 -->
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysMenuService" id="sysMenuServiceImpl"  protocol="dubbo"/>
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysRoleDeptService" id="sysRoleDeptServiceImpl"  protocol="dubbo"  />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysRoleMenuService" id="sysRoleMenuServiceImpl"  protocol="dubbo"/>
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysRoleService" id="sysRoleServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysUserRoleService" id="sysUserRoleServiceImpl"  protocol="dubbo"/>
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysUserService" id="sysUserServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysDeptService" id="sysDeptServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysConfigService" id="sysConfigServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysRegionService" id="sysRegionServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysMacroService" id="sysMacroServiceImpl"  protocol="dubbo" />
+	<dubbo:reference interface="com.vigoss.shop.sys.service.SysQuartzJobService" id="sysQuartzJobServiceImpl"  protocol="dubbo" />
+</beans>
