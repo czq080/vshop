@@ -24,12 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2018/7/7
  */
 public abstract class AbstractMessageFactory implements MessageContext, MessageMatcher, WechatAccountFactory {
-    private final Map<MessageKey, Class<? extends BaseMessage>> messageRegisterMap = new ConcurrentHashMap<>();
-    private final Map<MessageKey, List<MessageInterceptor>> messageInterceptorMap = new ConcurrentHashMap<>();
-    private final Map<MessageKey, List<MessageHandle>> messageHandleMap = new ConcurrentHashMap<>();
+    private final Map<MessageKey, Class<? extends BaseMessage>> messageRegisterMap = new HashMap<>();
+    private final Map<MessageKey, List<MessageInterceptor>> messageInterceptorMap = new HashMap<>();
+    private final Map<MessageKey, List<MessageHandle>> messageHandleMap = new HashMap<>();
     private final String basePackage;
     private final WechatAccountType wechatAccountType;
-    private final Map<String, WechatAccount> wechatAccountMap = new ConcurrentHashMap<>();
+    private final Map<String, WechatAccount> wechatAccountMap = new HashMap<>();
 
     private static final Map<WechatAccountType, Map<MessageKey, List<Class>>> messageHandleClasses = new HashMap<>();
     private static final Map<WechatAccountType, Map<MessageType, List<Class>>> messageInterceptorClasses = new HashMap<>();

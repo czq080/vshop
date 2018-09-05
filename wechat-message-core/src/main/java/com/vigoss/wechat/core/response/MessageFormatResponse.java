@@ -36,15 +36,17 @@ public class MessageFormatResponse {
     }
 
     public String encode(MessageResponse response, MessageTransfer messageTransfer, WechatAccount wechatAccount) {
+        if (response == null)
+            return null;
         EncryptType encryptType = messageTransfer.getEncryptType();
         StringBuilder content = new StringBuilder();
-        content.append(XML_START);
-        content.append(String.format(ELEMENT_TOUSERNAME, messageTransfer.getFromUserName()));
-        content.append(String.format(ELEMENT_FROMUSERNAME, messageTransfer.getToUserName()));
-        content.append(String.format(ELEMENT_CREATETIME, System.currentTimeMillis() / 1000l));
-        content.append(String.format(ELEMENT_MSGTYPE, response.msgType()));
-        content.append(response.content());
-        content.append(XML_END);
+        content.append(XML_START)
+                .append(String.format(ELEMENT_TOUSERNAME, messageTransfer.getFromUserName()))
+                .append(String.format(ELEMENT_FROMUSERNAME, messageTransfer.getToUserName()))
+                .append(String.format(ELEMENT_CREATETIME, System.currentTimeMillis() / 1000l))
+                .append(String.format(ELEMENT_MSGTYPE, response.msgType()))
+                .append(response.content())
+                .append(XML_END);
         if (encryptType == EncryptType.CIPHERTEXT) {
             String nonce = MessageUtils.generateRandomString(32);
             String timestamp = Long.toString(System.currentTimeMillis() / 1000l);

@@ -1,8 +1,15 @@
 package com.vigoss.wechat.core.dispatcher;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import com.vigoss.wechat.core.BaseMessage;
 import com.vigoss.wechat.core.account.WechatAccount;
 import com.vigoss.wechat.core.account.WechatAccountType;
+import com.vigoss.wechat.core.async.RingBufferLogEvent;
+import com.vigoss.wechat.core.async.RingBufferLogEventHandler;
+import com.vigoss.wechat.core.async.RingBufferLogEventTranslator;
 import com.vigoss.wechat.core.factory.AbstractMessageFactory;
 import com.vigoss.wechat.core.factory.MessageKey;
 import com.vigoss.wechat.core.handle.MessageHandle;
@@ -10,8 +17,8 @@ import com.vigoss.wechat.core.handle.MessageHandleExecutor;
 import com.vigoss.wechat.core.interceptor.MessageInterceptor;
 import com.vigoss.wechat.core.matcher.MessageMatcher;
 import com.vigoss.wechat.core.request.MessageRequest;
+import com.vigoss.wechat.core.response.BlankResponse;
 import com.vigoss.wechat.core.response.MessageFormatResponse;
-import com.vigoss.wechat.core.response.MessageResponse;
 import com.vigoss.wechat.core.type.EncryptType;
 import com.vigoss.wechat.core.util.MessageUtils;
 import com.vigoss.wechat.core.xml.EncryptMessageHandler;
@@ -20,17 +27,10 @@ import com.vigoss.wechat.core.xml.MessageTransferHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 /**
  * @author chenzhiqiang
@@ -41,13 +41,14 @@ public class MessageDispatcher implements DispatcherServlet {
 
     private Map<WechatAccountType, AbstractMessageFactory> messageFactoryMap;
 
-    private Map<Class<? extends BaseMessage>, Unmarshaller> messageUnmarshaller = new ConcurrentHashMap<>();
+    private Disruptor<RingBufferLogEvent> disruptor;
 
     public MessageDispatcher(AbstractMessageFactory... messageFactorys) {
         this.messageFactoryMap = new HashMap<>();
         for (AbstractMessageFactory messageFactory : messageFactorys) {
             messageFactoryMap.put(messageFactory.getWechatAccountType(), messageFactory);
         }
+        start();
     }
 
     @Override
@@ -103,31 +104,51 @@ public class MessageDispatcher implements DispatcherServlet {
             messageRequest.setEncryptType(EncryptType.CIPHERTEXT);
         } else
             messageRequest.setOriginalContent(xml);
-        return doDispatcher(messageRequest, factory);
+
+        return doDispatcher(messageRequest, factory, token);
     }
 
-    private String doDispatcher(MessageRequest request, AbstractMessageFactory factory) {
+    private String doDispatcher(MessageRequest request, AbstractMessageFactory factory, WechatAccount wechatAccount) {
         logger.info("parse message >> {}", request.getOriginalContent());
         MessageTransfer messageTransfer = MessageTransferHandler.parser(request);
         MessageKey messageKey = defineMessageKey(messageTransfer);
         Class<? extends BaseMessage> targetClass = factory.match(messageKey);
-        BaseMessage message = messageRead(request.getOriginalContent(), targetClass);
+//        BaseMessage message = messageRead(request.getOriginalContent(), targetClass);
         MessageHandleExecutor messageHandleExecutor = getHandlerExecutor(messageKey, factory);
-        logger.info("message key >> {} >> content >> {}", messageKey, message);
-        if (messageHandleExecutor.applyPreHandle(request, message)) {
-            MessageResponse response = null;
-            Exception e = null;
-            try {
-                response = messageHandleExecutor.getMessageResponse(request, message);
-                messageHandleExecutor.applyPostHandle(request, response, message);
-                logger.info("post message to wechat >> {}", response.content());
-            } catch (Exception var1) {
-                var1.printStackTrace();
-                e = var1;
-            }
-            messageHandleExecutor.applyAfterCompletion(request, response, message, e);
-            return MessageFormatResponse.getInstance().encode(response, messageTransfer, factory.getWechatAccount(request.getAppId(), request.getAgentId()));
-        } else return null;
+//        logger.info("message key >> {} >> content >> {}", messageKey, message);
+        final String[] msg = {null};
+        FutureTask<String> task = new FutureTask<>(() -> "success");
+        RingBufferLogEventTranslator translator = new RingBufferLogEventTranslator(request, task, messageHandleExecutor, targetClass, messageResponse -> {
+            MessageFormatResponse.getInstance().encode(messageResponse, messageTransfer, wechatAccount);
+            logger.info("return msg :{}", messageResponse.content());
+            msg[0] = MessageFormatResponse.getInstance().encode(messageResponse, messageTransfer, wechatAccount);
+        });
+        disruptor.publishEvent(translator);
+        try {
+            task.get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            logger.info("消息5s内没有返回，返回默认空值");
+            return MessageFormatResponse.getInstance().encode(new BlankResponse(), messageTransfer, wechatAccount);
+        }
+//        if (messageHandleExecutor.applyPreHandle(request, message)) {
+//            MessageResponse response = null;
+//            Exception e = null;
+//            try {
+//                response = messageHandleExecutor.getMessageResponse(request, message);
+//                messageHandleExecutor.applyPostHandle(request, response, message);
+//                logger.info("post message to wechat >> {}", response.content());
+//            } catch (Exception var1) {
+//                var1.printStackTrace();
+//                e = var1;
+//            }
+//            messageHandleExecutor.applyAfterCompletion(request, response, message, e);
+//            return MessageFormatResponse.getInstance().encode(response, messageTransfer, factory.getWechatAccount(request.getAppId(), request.getAgentId()));
+//        } else return null;
+        return msg[0];
     }
 
     private MessageKey defineMessageKey(MessageTransfer messageTransfer) {
@@ -136,36 +157,45 @@ public class MessageDispatcher implements DispatcherServlet {
                 messageTransfer.getAccountType());
     }
 
-    private <T extends BaseMessage> T messageRead(String message, Class<T> clazz) {
-        if (clazz == null) {
-            return null;
-        }
-        try {
-            Source source = new StreamSource(new ByteArrayInputStream(MessageUtils.getBytesUtf8(message)));
-            JAXBElement<T> jaxbElement = getUnmarshaller(clazz).unmarshal(source, clazz);
-            return jaxbElement.getValue();
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Unmarshaller getUnmarshaller(Class<? extends BaseMessage> clazz) {
-        Unmarshaller unmarshaller = messageUnmarshaller.get(clazz);
-        if (unmarshaller == null) {
-            try {
-                JAXBContext jaxbContext = JAXBContext.newInstance(clazz);
-                unmarshaller = jaxbContext.createUnmarshaller();
-                messageUnmarshaller.put(clazz, unmarshaller);
-            } catch (JAXBException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return unmarshaller;
-    }
+//    private Unmarshaller getUnmarshaller(Class<? extends BaseMessage> clazz) {
+//        Unmarshaller unmarshaller = messageUnmarshaller.get(clazz);
+//        if (unmarshaller == null) {
+//            synchronized (lock) {
+//                unmarshaller = messageUnmarshaller.get(clazz);
+//                if (unmarshaller == null) {
+//                    try {
+//                        JAXBContext jaxbContext = JAXBContext.newInstance(clazz);
+//                        unmarshaller = jaxbContext.createUnmarshaller();
+//                        messageUnmarshaller.put(clazz, unmarshaller);
+//                    } catch (JAXBException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }
+//            }
+//        }
+//        return unmarshaller;
+//    }
 
     private MessageHandleExecutor getHandlerExecutor(MessageKey messageKey, MessageMatcher messageMatcher) {
         List<MessageHandle> messageHandlers = messageMatcher.matchHandles(messageKey);
         List<MessageInterceptor> messageInterceptors = messageMatcher.matchInterceptors(messageKey);
         return new MessageHandleExecutor(messageHandlers, messageInterceptors);
+    }
+
+    public synchronized void start() {
+        if (disruptor != null) {
+            return;
+        }
+        final int ringBufferSize = 32;
+        final WaitStrategy waitStrategy = new BlockingWaitStrategy();
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        disruptor = new Disruptor<>(RingBufferLogEvent.FACTORY, ringBufferSize, executor, ProducerType.MULTI,
+                waitStrategy);
+
+        final RingBufferLogEventHandler[] handlers = {new RingBufferLogEventHandler()};
+        disruptor.handleEventsWith(handlers);
+
+        disruptor.start();
     }
 }

@@ -21,6 +21,7 @@
         <module>wechat-message-core</module>
         <module>wechat-official-message-server</module>
         <module>wechat-enterprise-message</module>
+        <module>disruptor</module>
     </modules>
 
     <properties>
@@ -73,6 +74,8 @@
         <redis.clients.jedis>2.9.0</redis.clients.jedis>
         <dom4j>1.6.1</dom4j>
         <jaxen>1.1.6</jaxen>
+        <disruptor.version>3.4.2</disruptor.version>
+        <commons.pool2.version>2.6.0</commons.pool2.version>
     </properties>
 
     <dependencyManagement>
@@ -362,6 +365,21 @@
                 <groupId>org.quartz-scheduler</groupId>
                 <artifactId>quartz</artifactId>
                 <version>${quartz-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+                <version>1.2.17</version>
+            </dependency>
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>${disruptor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-pool2</artifactId>
+                <version>${commons.pool2.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
