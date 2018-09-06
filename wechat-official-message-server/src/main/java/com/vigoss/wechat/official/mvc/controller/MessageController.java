@@ -68,7 +68,6 @@ public class MessageController {
             }
         }
         messageRequest.setMsgSignature(request.getParameter("msg_signature"));
-        System.out.println(xml);
         return messageDispatcher.handlePost(messageRequest, xml);
     }
 }

@@ -5,12 +5,6 @@ import com.vigoss.wechat.core.type.EncryptType;
 
 /**
  * 微信请求
- *
- * @author jinyu(foxinmy @ gmail.com)
- * @className WeixinRequest
- * @date 2015年3月29日
- * @see
- * @since JDK 1.6
  */
 public class MessageRequest {
     /**

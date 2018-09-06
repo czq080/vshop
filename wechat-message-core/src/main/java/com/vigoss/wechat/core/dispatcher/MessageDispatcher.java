@@ -1,7 +1,9 @@
 package com.vigoss.wechat.core.dispatcher;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.YieldingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 import com.vigoss.wechat.core.BaseMessage;
@@ -119,7 +121,6 @@ public class MessageDispatcher implements DispatcherServlet {
         final String[] msg = {null};
         FutureTask<String> task = new FutureTask<>(() -> "success");
         RingBufferLogEventTranslator translator = new RingBufferLogEventTranslator(request, task, messageHandleExecutor, targetClass, messageResponse -> {
-            MessageFormatResponse.getInstance().encode(messageResponse, messageTransfer, wechatAccount);
             logger.info("return msg :{}", messageResponse.content());
             msg[0] = MessageFormatResponse.getInstance().encode(messageResponse, messageTransfer, wechatAccount);
         });
@@ -186,7 +187,7 @@ public class MessageDispatcher implements DispatcherServlet {
         if (disruptor != null) {
             return;
         }
-        final int ringBufferSize = 32;
+        final int ringBufferSize = 8;
         final WaitStrategy waitStrategy = new BlockingWaitStrategy();
         ExecutorService executor = Executors.newFixedThreadPool(4);
 
