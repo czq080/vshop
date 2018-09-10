@@ -17,10 +17,6 @@
         <module>sys-service-api</module>
         <module>wechat-enterprise-api</module>
         <module>wechat-official-api</module>
-        <module>wechat-official-message</module>
-        <module>wechat-message-core</module>
-        <module>wechat-official-message-server</module>
-        <module>wechat-enterprise-message</module>
         <module>disruptor</module>
     </modules>
 
